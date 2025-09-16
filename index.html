@@ -5,16 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhatsApp Chat Parser</title>
     <style>
-        /* CSS is embedded here */
         body {
-            background-color: #e5ddd5; /* WhatsApp background color */
+            background-color: #e5ddd5;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
         }
-
         #app-container {
             width: 100%;
             max-width: 800px;
@@ -24,17 +22,8 @@
             padding: 20px;
             box-sizing: border-box;
         }
-
-        h1 {
-            text-align: center;
-            color: #075E54;
-        }
-
-        p {
-            text-align: center;
-            color: #555;
-        }
-
+        h1 { text-align: center; color: #075E54; }
+        p { text-align: center; color: #555; }
         input[type="file"] {
             display: block;
             margin: 20px auto;
@@ -43,9 +32,8 @@
             border-radius: 5px;
             cursor: pointer;
         }
-
         #chat-container {
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); /* WhatsApp background pattern */
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
             height: 70vh;
             overflow-y: scroll;
             padding: 20px;
@@ -55,7 +43,6 @@
             flex-direction: column;
             gap: 12px;
         }
-
         .message-bubble {
             max-width: 70%;
             padding: 8px 12px;
@@ -63,19 +50,16 @@
             position: relative;
             word-wrap: break-word;
         }
-
         .received {
             background-color: #ffffff;
             align-self: flex-start;
             border-top-left-radius: 0;
         }
-
         .sent {
             background-color: #dcf8c6;
             align-self: flex-end;
             border-top-right-radius: 0;
         }
-
         .system-message {
             background-color: #e1f2fb;
             align-self: center;
@@ -84,19 +68,13 @@
             color: #555;
             padding: 5px 10px;
         }
-
         .sender-name {
             font-weight: bold;
-            color: #075E54; /* Or use different colors for different users */
+            color: #075E54;
             margin-bottom: 4px;
             font-size: 0.9em;
         }
-
-        .message-text {
-            font-size: 1em;
-            color: #111;
-        }
-
+        .message-text { font-size: 1em; color: #111; }
         .timestamp {
             font-size: 0.75em;
             color: #999;
@@ -117,16 +95,13 @@
     </div>
 
     <script>
-        // JavaScript is embedded here
         const userColors = {};
         const colorPalette = ['#028d70', '#b54e3a', '#9558b3', '#4b88b0', '#e39129'];
         let colorIndex = 0;
 
         document.getElementById('fileInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
-            if (!file) {
-                return;
-            }
+            if (!file) return;
 
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -138,12 +113,11 @@
 
         function parseAndDisplayChat(content) {
             const chatContainer = document.getElementById('chat-container');
-            chatContainer.innerHTML = ''; // Clear previous chat
+            chatContainer.innerHTML = '';
             const lines = content.split('\n');
 
-            // Regex to identify a new message line vs. a multi-line message continuation
-            // Format: [DD/MM/YYYY, HH:MM:SS] Sender: Message
-            const messageRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}), (\d{1,2}:\d{2}:\d{2})\] (.+?): (.*)/;
+            // *** NEW REGEX TAILORED TO YOUR FILE FORMAT ***
+            const messageRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}), (\d{1,2}:\d{2}:\d{2})\s*([AP]M)\] ([^:]+): (.*)/;
 
             let currentMessageBubble = null;
 
@@ -151,58 +125,54 @@
                 const match = line.match(messageRegex);
 
                 if (match) {
-                    // It's a new message line
-                    const [, date, time, sender, text] = match;
+                    // This is a new message line that matches the format
+                    const [, date, time, am_pm, sender, text] = match;
+                    const fullTime = `${time} ${am_pm}`;
 
                     const messageBubble = document.createElement('div');
                     messageBubble.classList.add('message-bubble');
 
-                    // Simple logic: assume the first user is the "sender" (you)
-                    // A more robust app could let the user choose their name.
-                    if (Object.keys(userColors).length === 0 && sender !== 'You') {
-                        userColors['You'] = 'sent'; // Assign the first participant as "You" implicitly
-                    }
-                    
-                    if (sender === 'You') {
+                    // Let's assume one user is 'You' for sent messages.
+                    // You can change 'Your Name Here' to your actual name in the chat.
+                    if (sender.toLowerCase() === 'your name here') {
                         messageBubble.classList.add('sent');
                     } else {
                         messageBubble.classList.add('received');
                     }
 
-                    // Handle system messages (e.g., "You were added") which might not have a colon
-                    if (!text) {
-                        messageBubble.classList.add('system-message');
-                        messageBubble.innerHTML = `<span class="message-text">${sender}</span>`;
-                    } else {
-                        // Assign a color to the sender if they don't have one
-                        if (!userColors[sender] && sender !== 'You') {
-                            userColors[sender] = colorPalette[colorIndex % colorPalette.length];
-                            colorIndex++;
-                        }
-
-                        messageBubble.innerHTML = `
-                            <div class="sender-name" style="color: ${userColors[sender] || '#075E54'}">${sender}</div>
-                            <div class="message-text">${formatText(text)}</div>
-                            <div class="timestamp">${time}</div>
-                        `;
+                    // Assign a color to the sender if they don't have one
+                    if (!userColors[sender]) {
+                        userColors[sender] = colorPalette[colorIndex % colorPalette.length];
+                        colorIndex++;
                     }
+
+                    messageBubble.innerHTML = `
+                        <div class="sender-name" style="color: ${userColors[sender]}">${sender}</div>
+                        <div class="message-text">${formatText(text)}</div>
+                        <div class="timestamp">${fullTime}</div>
+                    `;
+                    
                     chatContainer.appendChild(messageBubble);
-                    currentMessageBubble = messageBubble; // Keep track of the last bubble for multi-line messages
+                    currentMessageBubble = messageBubble; // Remember for multi-line messages
 
                 } else if (currentMessageBubble && line.trim() !== '') {
-                    // It's a continuation of the previous message (multi-line)
+                    // This is a continuation of the previous message (multi-line)
                     const messageTextElement = currentMessageBubble.querySelector('.message-text');
                     if (messageTextElement) {
                         messageTextElement.innerHTML += `<br>${formatText(line)}`;
                     }
+                } else if (line.trim() !== '') {
+                    // This is likely a system message (e.g., "You created this group")
+                    const systemMessageBubble = document.createElement('div');
+                    systemMessageBubble.classList.add('message-bubble', 'system-message');
+                    systemMessageBubble.textContent = line.trim();
+                    chatContainer.appendChild(systemMessageBubble);
+                    currentMessageBubble = null;
                 }
             });
-
-            // Scroll to the latest message
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // Function to format text (e.g., bolding, italics)
         function formatText(text) {
             return text
                 .replace(/\*(.*?)\*/g, '<strong>$1</strong>') // Bold
